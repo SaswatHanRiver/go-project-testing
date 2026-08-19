@@ -1,0 +1,27 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Environment variables - never commit secrets
+.env
+
+# Go binary output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+app
+
+# Go test cache
+*.test
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# OS files
+.DS_Store
+Thumbs.db
