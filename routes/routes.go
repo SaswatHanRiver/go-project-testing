@@ -2,6 +2,7 @@ package routes
 
 import (
 	"go-project-testing/controllers"
+	"go-project-testing/middleware"
 	"go-project-testing/worker"
 
 	"github.com/gin-gonic/gin"
@@ -9,13 +10,23 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// SetupRoutes - pass the worker into the controller (manual dependency injection)
-// In Spring Boot this is done automatically via @Autowired
-// In Go we pass dependencies explicitly - no magic, fully traceable
 func SetupRoutes(router *gin.Engine, w *worker.JobWorker) {
+	authController := controllers.NewAuthController()
 	productController := controllers.NewProductController(w)
 
+	// ── Public routes (no token needed) ──────────────────────────────────────
+	// Like permitAll() in Spring Security's SecurityConfig
+	auth := router.Group("/auth")
+	{
+		auth.POST("/register", authController.Register)
+		auth.POST("/login", authController.Login)
+	}
+
+	// ── Protected routes (JWT required) ──────────────────────────────────────
+	// Like .anyRequest().authenticated() in Spring Security
+	// Every request to /api/* goes through AuthMiddleware first
 	api := router.Group("/api")
+	api.Use(middleware.AuthMiddleware()) // attach middleware to this group
 	{
 		products := api.Group("/products")
 		{
@@ -25,7 +36,11 @@ func SetupRoutes(router *gin.Engine, w *worker.JobWorker) {
 			products.PUT("/:id", productController.UpdateProduct)
 			products.DELETE("/:id", productController.DeleteProduct)
 		}
+
+		// /auth/me is protected - requires valid token
+		api.GET("/auth/me", authController.Me)
 	}
 
+	// Swagger UI - public
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

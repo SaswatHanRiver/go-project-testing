@@ -14,7 +14,6 @@ import (
 
 var DB *gorm.DB
 
-// ConnectDatabase - equivalent to Spring Boot's DataSource + JPA auto-configuration
 func ConnectDatabase() {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Seoul",
@@ -33,8 +32,8 @@ func ConnectDatabase() {
 		os.Exit(1)
 	}
 
-	// AutoMigrate = spring.jpa.hibernate.ddl-auto=update
-	err = db.AutoMigrate(&models.Product{})
+	// AutoMigrate both models - like ddl-auto=update for both entities
+	err = db.AutoMigrate(&models.Product{}, &models.User{})
 	if err != nil {
 		slog.Error("Failed to migrate database", "error", err)
 		os.Exit(1)
