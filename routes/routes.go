@@ -13,21 +13,23 @@ import (
 func SetupRoutes(router *gin.Engine, w *worker.JobWorker) {
 	authController := controllers.NewAuthController()
 	productController := controllers.NewProductController(w)
+	categoryController := controllers.NewCategoryController()
 
-	// ── Public routes (no token needed) ──────────────────────────────────────
-	// Like permitAll() in Spring Security's SecurityConfig
+	// ── Public routes ─────────────────────────────────────────────────────────
 	auth := router.Group("/auth")
 	{
 		auth.POST("/register", authController.Register)
 		auth.POST("/login", authController.Login)
 	}
 
-	// ── Protected routes (JWT required) ──────────────────────────────────────
-	// Like .anyRequest().authenticated() in Spring Security
-	// Every request to /api/* goes through AuthMiddleware first
+	// ── Protected routes (JWT required) ───────────────────────────────────────
 	api := router.Group("/api")
-	api.Use(middleware.AuthMiddleware()) // attach middleware to this group
+	api.Use(middleware.AuthMiddleware())
 	{
+		// Auth
+		api.GET("/auth/me", authController.Me)
+
+		// Products
 		products := api.Group("/products")
 		{
 			products.GET("", productController.GetAllProducts)
@@ -37,8 +39,16 @@ func SetupRoutes(router *gin.Engine, w *worker.JobWorker) {
 			products.DELETE("/:id", productController.DeleteProduct)
 		}
 
-		// /auth/me is protected - requires valid token
-		api.GET("/auth/me", authController.Me)
+		// Categories
+		categories := api.Group("/categories")
+		{
+			categories.GET("", categoryController.GetAllCategories)
+			categories.GET("/:id", categoryController.GetCategoryByID)
+			categories.GET("/:id/products", categoryController.GetCategoryProducts) // nested route
+			categories.POST("", categoryController.CreateCategory)
+			categories.PUT("/:id", categoryController.UpdateCategory)
+			categories.DELETE("/:id", categoryController.DeleteCategory)
+		}
 	}
 
 	// Swagger UI - public

@@ -32,8 +32,12 @@ func ConnectDatabase() {
 		os.Exit(1)
 	}
 
-	// AutoMigrate both models - like ddl-auto=update for both entities
-	err = db.AutoMigrate(&models.Product{}, &models.User{})
+	// AutoMigrate all models - Category must come before Product (FK dependency)
+	err = db.AutoMigrate(
+		&models.Category{}, // parent table first
+		&models.Product{},  // has FK to Category
+		&models.User{},
+	)
 	if err != nil {
 		slog.Error("Failed to migrate database", "error", err)
 		os.Exit(1)
