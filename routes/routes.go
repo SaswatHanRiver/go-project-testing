@@ -14,6 +14,7 @@ func SetupRoutes(router *gin.Engine, w *worker.JobWorker) {
 	authController := controllers.NewAuthController()
 	productController := controllers.NewProductController(w)
 	categoryController := controllers.NewCategoryController()
+	stressController := controllers.NewStressController()
 
 	// ── Public routes ─────────────────────────────────────────────────────────
 	auth := router.Group("/auth")
@@ -22,7 +23,7 @@ func SetupRoutes(router *gin.Engine, w *worker.JobWorker) {
 		auth.POST("/login", authController.Login)
 	}
 
-	// ── Protected routes (JWT required) ───────────────────────────────────────
+	// ── Protected routes ──────────────────────────────────────────────────────
 	api := router.Group("/api")
 	api.Use(middleware.AuthMiddleware())
 	{
@@ -44,13 +45,16 @@ func SetupRoutes(router *gin.Engine, w *worker.JobWorker) {
 		{
 			categories.GET("", categoryController.GetAllCategories)
 			categories.GET("/:id", categoryController.GetCategoryByID)
-			categories.GET("/:id/products", categoryController.GetCategoryProducts) // nested route
+			categories.GET("/:id/products", categoryController.GetCategoryProducts)
 			categories.POST("", categoryController.CreateCategory)
 			categories.PUT("/:id", categoryController.UpdateCategory)
 			categories.DELETE("/:id", categoryController.DeleteCategory)
 		}
+
+		// Concurrency stress test
+		api.GET("/stress", stressController.RunStressTest)
 	}
 
-	// Swagger UI - public
+	// Swagger UI
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
