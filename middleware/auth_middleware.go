@@ -9,45 +9,43 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AuthMiddleware - equivalent to JwtAuthenticationFilter extends OncePerRequestFilter
-// In Spring Boot this is registered in SecurityConfig.filterChain()
-// In Gin we apply it to a route group: router.Group("/api").Use(AuthMiddleware())
+// AuthMiddleware - equivalent to JwtAuthenticationFilter in Spring Boot
 func AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// Read the Authorization header - "Bearer <token>"
 		authHeader := ctx.GetHeader("Authorization")
 		if authHeader == "" {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Authorization header is required",
-			})
+			utils.Error(ctx, http.StatusUnauthorized, "Authorization header is required")
+			ctx.Abort()
 			return
 		}
 
-		// Header must be "Bearer <token>" format
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Authorization header format must be: Bearer <token>",
-			})
+		var tokenString string
+
+		// Accept both formats:
+		// 1. "Bearer eyJhbG..."  (standard format)
+		// 2. "eyJhbG..."         (token only - Swagger UI sends this sometimes)
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			tokenString = authHeader
+		}
+
+		tokenString = strings.TrimSpace(tokenString)
+		if tokenString == "" {
+			utils.Error(ctx, http.StatusUnauthorized, "Token is missing")
+			ctx.Abort()
 			return
 		}
 
-		tokenString := parts[1]
-
-		// Validate token - like jwtUtil.validateToken() in Spring Boot filter
 		claims, err := utils.ValidateToken(tokenString)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid or expired token",
-			})
+			utils.Error(ctx, http.StatusUnauthorized, "Invalid or expired token")
+			ctx.Abort()
 			return
 		}
 
-		// Store user info in context - like SecurityContextHolder.getContext().setAuthentication()
-		// Controllers can read this with: ctx.GetUint("userID")
 		ctx.Set("userID", claims.UserID)
 		ctx.Set("email", claims.Email)
-
-		ctx.Next() // continue to the actual handler
+		ctx.Next()
 	}
 }

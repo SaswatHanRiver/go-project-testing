@@ -6,33 +6,31 @@ import (
 	"gorm.io/gorm"
 )
 
-// User - equivalent to @Entity + UserDetails in Spring Boot
-// json:"-" on Password means it is NEVER included in JSON responses
-// like @JsonIgnore in Jackson
+// User entity
 type User struct {
-	ID        uint           `json:"id"         gorm:"primaryKey;autoIncrement"`
-	Name      string         `json:"name"       gorm:"not null"`
-	Email     string         `json:"email"      gorm:"uniqueIndex;not null"`
-	Password  string         `json:"-"          gorm:"not null"` // hidden from all responses
+	ID        uint           `json:"id"`
+	Name      string         `json:"name"`
+	Email     string         `json:"email"`
+	Password  string         `json:"-"` // hidden from all responses
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"-"          gorm:"index"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
-// RegisterRequest - DTO for registration (like a Spring Boot @RequestBody DTO)
+// RegisterRequest DTO
 type RegisterRequest struct {
-	Name     string `json:"name"     binding:"required"`
-	Email    string `json:"email"    binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Name     string `json:"name"     binding:"required"       example:"Saswat Kumar Sahoo"`
+	Email    string `json:"email"    binding:"required,email" example:"saswat.sahoo@hanriver.in"`
+	Password string `json:"password" binding:"required,min=6" example:"Saswat@123"`
 }
 
-// LoginRequest - DTO for login
+// LoginRequest DTO
 type LoginRequest struct {
-	Email    string `json:"email"    binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Email    string `json:"email"    binding:"required,email" example:"saswat.sahoo@hanriver.in"`
+	Password string `json:"password" binding:"required"       example:"Saswat@123"`
 }
 
-// AuthResponse - what we return after login/register (token + user info)
+// AuthResponse - returned after login/register
 type AuthResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`

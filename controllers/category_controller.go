@@ -6,11 +6,11 @@ import (
 
 	"go-project-testing/models"
 	"go-project-testing/services"
+	"go-project-testing/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CategoryController - equivalent to @RestController in Spring Boot
 type CategoryController struct {
 	service *services.CategoryService
 }
@@ -25,16 +25,16 @@ func NewCategoryController() *CategoryController {
 // @Tags         categories
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {array}   models.Category
-// @Failure      500  {object}  map[string]string
+// @Success      200  {object}  utils.ApiResponse
+// @Failure      500  {object}  utils.ApiResponse
 // @Router       /api/categories [get]
 func (c *CategoryController) GetAllCategories(ctx *gin.Context) {
 	categories, err := c.service.GetAllCategories()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utils.Error(ctx, http.StatusInternalServerError, "Failed to fetch categories")
 		return
 	}
-	ctx.JSON(http.StatusOK, categories)
+	utils.Success(ctx, http.StatusOK, "Categories fetched successfully", categories)
 }
 
 // GetCategoryByID godoc
@@ -44,21 +44,21 @@ func (c *CategoryController) GetAllCategories(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Category ID"
-// @Success      200  {object}  models.Category
-// @Failure      404  {object}  map[string]string
+// @Success      200  {object}  utils.ApiResponse
+// @Failure      404  {object}  utils.ApiResponse
 // @Router       /api/categories/{id} [get]
 func (c *CategoryController) GetCategoryByID(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		utils.Error(ctx, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 	category, err := c.service.GetCategoryByID(uint(id))
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+		utils.Error(ctx, http.StatusNotFound, "Category not found")
 		return
 	}
-	ctx.JSON(http.StatusOK, category)
+	utils.Success(ctx, http.StatusOK, "Category fetched successfully", category)
 }
 
 // GetCategoryProducts godoc
@@ -68,21 +68,21 @@ func (c *CategoryController) GetCategoryByID(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Category ID"
-// @Success      200  {array}   models.Product
-// @Failure      404  {object}  map[string]string
+// @Success      200  {object}  utils.ApiResponse
+// @Failure      404  {object}  utils.ApiResponse
 // @Router       /api/categories/{id}/products [get]
 func (c *CategoryController) GetCategoryProducts(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		utils.Error(ctx, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 	category, err := c.service.GetCategoryWithProducts(uint(id))
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+		utils.Error(ctx, http.StatusNotFound, "Category not found")
 		return
 	}
-	ctx.JSON(http.StatusOK, category.Products)
+	utils.Success(ctx, http.StatusOK, "Products fetched successfully", category.Products)
 }
 
 // CreateCategory godoc
@@ -93,26 +93,25 @@ func (c *CategoryController) GetCategoryProducts(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        category  body      models.CategoryRequest  true  "Category data"
-// @Success      201       {object}  models.Category
-// @Failure      400       {object}  map[string]string
-// @Failure      409       {object}  map[string]string
+// @Success      201       {object}  utils.ApiResponse
+// @Failure      400       {object}  utils.ApiResponse
 // @Router       /api/categories [post]
 func (c *CategoryController) CreateCategory(ctx *gin.Context) {
 	var req models.CategoryRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	category, err := c.service.CreateCategory(&req)
 	if err != nil {
 		if err.Error() == "category name already exists" {
-			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			utils.Error(ctx, http.StatusConflict, err.Error())
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utils.Error(ctx, http.StatusInternalServerError, "Failed to create category")
 		return
 	}
-	ctx.JSON(http.StatusCreated, category)
+	utils.Success(ctx, http.StatusCreated, "Category created successfully", category)
 }
 
 // UpdateCategory godoc
@@ -124,27 +123,26 @@ func (c *CategoryController) CreateCategory(ctx *gin.Context) {
 // @Security     BearerAuth
 // @Param        id        path      int                     true  "Category ID"
 // @Param        category  body      models.CategoryRequest  true  "Updated category data"
-// @Success      200       {object}  models.Category
-// @Failure      400       {object}  map[string]string
-// @Failure      404       {object}  map[string]string
+// @Success      200       {object}  utils.ApiResponse
+// @Failure      404       {object}  utils.ApiResponse
 // @Router       /api/categories/{id} [put]
 func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		utils.Error(ctx, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 	var req models.CategoryRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	category, err := c.service.UpdateCategory(uint(id), &req)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		utils.Error(ctx, http.StatusNotFound, err.Error())
 		return
 	}
-	ctx.JSON(http.StatusOK, category)
+	utils.Success(ctx, http.StatusOK, "Category updated successfully", category)
 }
 
 // DeleteCategory godoc
@@ -154,18 +152,18 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Category ID"
-// @Success      200  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
+// @Success      200  {object}  utils.ApiResponse
+// @Failure      404  {object}  utils.ApiResponse
 // @Router       /api/categories/{id} [delete]
 func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		utils.Error(ctx, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 	if err := c.service.DeleteCategory(uint(id)); err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		utils.Error(ctx, http.StatusNotFound, err.Error())
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "Category deleted successfully"})
+	utils.Success(ctx, http.StatusOK, "Category deleted successfully", nil)
 }

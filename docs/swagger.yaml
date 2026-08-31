@@ -1,30 +1,5 @@
 basePath: /
 definitions:
-  models.AuthResponse:
-    properties:
-      token:
-        type: string
-      user:
-        $ref: '#/definitions/models.User'
-    type: object
-  models.Category:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      products:
-        description: omitempty = hide if empty
-        items:
-          $ref: '#/definitions/models.Product'
-        type: array
-      updated_at:
-        type: string
-    type: object
   models.CategoryRequest:
     properties:
       description:
@@ -54,44 +29,25 @@ definitions:
   models.LoginRequest:
     properties:
       email:
+        example: saswat.sahoo@hanriver.in
         type: string
       password:
+        example: Saswat@123
         type: string
     required:
     - email
     - password
     type: object
-  models.Product:
-    properties:
-      category:
-        allOf:
-        - $ref: '#/definitions/models.Category'
-        description: preloaded relation
-      category_id:
-        description: FK - nullable
-        type: integer
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      price:
-        type: number
-      stock:
-        type: integer
-      updated_at:
-        type: string
-    type: object
   models.RegisterRequest:
     properties:
       email:
+        example: saswat.sahoo@hanriver.in
         type: string
       name:
+        example: Saswat Kumar Sahoo
         type: string
       password:
+        example: Saswat@123
         minLength: 6
         type: string
     required:
@@ -99,18 +55,15 @@ definitions:
     - name
     - password
     type: object
-  models.User:
+  utils.ApiResponse:
     properties:
-      created_at:
+      data: {}
+      message:
         type: string
-      email:
-        type: string
-      id:
+      status_code:
         type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
+      success:
+        type: boolean
     type: object
 host: localhost:8080
 info:
@@ -119,6 +72,25 @@ info:
   title: Go Project Testing API
   version: "1.0"
 paths:
+  /api/auth/me:
+    get:
+      description: Returns the currently authenticated user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - auth
   /api/categories:
     get:
       description: Returns a list of all categories
@@ -128,15 +100,11 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Category'
-            type: array
+            $ref: '#/definitions/utils.ApiResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       security:
       - BearerAuth: []
       summary: Get all categories
@@ -159,19 +127,11 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.Category'
+            $ref: '#/definitions/utils.ApiResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       security:
       - BearerAuth: []
       summary: Create a new category
@@ -192,15 +152,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       security:
       - BearerAuth: []
       summary: Delete a category
@@ -220,13 +176,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Category'
+            $ref: '#/definitions/utils.ApiResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       security:
       - BearerAuth: []
       summary: Get category by ID
@@ -254,19 +208,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Category'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       security:
       - BearerAuth: []
       summary: Update a category
@@ -287,15 +233,11 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Product'
-            type: array
+            $ref: '#/definitions/utils.ApiResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       security:
       - BearerAuth: []
       summary: Get products by category
@@ -310,15 +252,13 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Product'
-            type: array
+            $ref: '#/definitions/utils.ApiResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Get all products
       tags:
       - products
@@ -339,19 +279,13 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.Product'
+            $ref: '#/definitions/utils.ApiResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Create a new product
       tags:
       - products
@@ -370,21 +304,13 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Delete a product
       tags:
       - products
@@ -402,19 +328,13 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Product'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Get product by ID
       tags:
       - products
@@ -440,22 +360,37 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Product'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
+      security:
+      - BearerAuth: []
       summary: Update a product
       tags:
       - products
+  /api/stress:
+    get:
+      description: Spawns N goroutines simultaneously and shows memory + throughput
+        vs Java
+      parameters:
+      - description: Number of goroutines to spawn (default 20000)
+        in: query
+        name: jobs
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Goroutine concurrency stress test
+      tags:
+      - stress
   /auth/login:
     post:
       consumes:
@@ -474,42 +409,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.AuthResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       summary: Login
-      tags:
-      - auth
-  /auth/me:
-    get:
-      description: Returns the currently authenticated user's info from the JWT token
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get current user
       tags:
       - auth
   /auth/register:
@@ -530,20 +435,18 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.AuthResponse'
+            $ref: '#/definitions/utils.ApiResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/utils.ApiResponse'
       summary: Register a new user
       tags:
       - auth
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter: Bearer {your_token}'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
